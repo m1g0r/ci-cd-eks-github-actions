@@ -1,0 +1,55 @@
+name: Build, Push to ECR, Deploy to AWS EKS
+
+on:
+  push:
+    branches:
+      - master
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  AWS_DEFAULT_OUTPUT: json
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+  CONTAINER_IMAGE: jobsnap-docs:${{ github.sha }}
+
+jobs:
+  build-and-push:
+    name: Build, push and deploy
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@master
+      with:
+        ref: ${{ github.ref }}
+      
+    - name: Setup ECR
+      run: |
+        # Login to AWS ECR
+        $( aws ecr get-login --no-include-email )
+
+    - name: Build and tag the image
+      run: |
+        # Build and tag the image
+        docker build \
+          -t $CONTAINER_IMAGE \
+          -t $GITHUB_REPOSITORY:$GITHUB_SHA \
+          -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE .
+
+    # Only push to registry on master
+    - name: Push to ECR
+      if: github.ref == 'refs/heads/master'
+      run: |
+        # Push image to AWS ECR
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$CONTAINER_IMAGE
+
+    - name: Deploy to EKS
+      uses: m1g0r/aws/kubectl@master
+      with:
+        # kubectl apply
+        args: apply -f ./kube
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
