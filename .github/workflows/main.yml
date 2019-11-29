@@ -7,13 +7,13 @@ on:
 
 # Environment variables available to all jobs and steps in this workflow
 env:
-  AWS_DEFAULT_REGION: us-east-2
+  AWS_DEFAULT_REGION: us-east-1
   AWS_DEFAULT_OUTPUT: json
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-  CONTAINER_IMAGE: jobsnap-docs:${{ github.sha }}
+  CONTAINER_IMAGE: hello-kubernetes:${{ github.sha }}
 
 jobs:
   build-and-push:
@@ -49,7 +49,21 @@ jobs:
     - name: Deploy to EKS
       uses: m1g0r/aws/kubectl@master
       with:
-        # kubectl apply
-        args: apply -f ./kube
+        args: apply -f ./k8s
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+
+
+    - name: Get deployments status
+      uses: m1g0r/aws/kubectl@master
+      with:
+        args: rollout status deployment/hello-kubernetes -n defaults
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+
+    - name: Get services
+      uses: m1g0r/aws/kubectl@master
+      with:
+        args: get services -o wide -n defaults
       env:
         KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
