@@ -1,0 +1,38 @@
+{
+  "name": "hello-kubernetes",
+  "description": "Node.js app for Wise Engineering Kubernetes workshop.",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "author": "Ihor Mozil",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/melnychukvitaliy/gcloud-k8s-workshop.git"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "system-test": "repo-tools test app -- server.js",
+    "test": "npm run system-test"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "@google-cloud/nodejs-repo-tools": "^3.3.0"
+  },
+  "cloud-repo-tools": {
+    "test": {
+      "app": {
+        "msg": "Hello Kubernetes!",
+        "args": [
+          "server.js"
+        ]
+      }
+    },
+    "requiresKeyFile": true,
+    "requiresProjectId": true
+  }
+}
